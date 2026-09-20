@@ -155,6 +155,22 @@ class NotificationService {
     return true;
   }
 
+  /// 系统层面的通知总开关（null = 平台不支持/未知）。
+  Future<bool?> notificationsEnabled() async {
+    final android = _plugin.resolvePlatformSpecificImplementation<
+      AndroidFlutterLocalNotificationsPlugin
+    >();
+    return android?.areNotificationsEnabled();
+  }
+
+  /// 跳转本应用的系统通知设置页。
+  Future<void> openNotificationSettings() async {
+    final android = _plugin.resolvePlatformSpecificImplementation<
+      AndroidFlutterLocalNotificationsPlugin
+    >();
+    await android?.openAppNotificationSettings();
+  }
+
   /// 重排：cancelAll 后对窗口内事件 zonedSchedule（设计 §4.2）。
   Future<void> reschedule(List<ScheduledNotification> events) async {
     await _plugin.cancelAll();

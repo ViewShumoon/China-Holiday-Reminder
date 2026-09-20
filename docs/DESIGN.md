@@ -113,7 +113,7 @@ String buildBriefing(HolidaySegment seg, List<MakeupDay> makeups, int advanceDay
 
 ## 5. UI 设计（Material Design 3）
 
-主题色：来自系统取色，亮 / 暗色跟随系统；NavigationBar 两个目的地（首页 / 设置）。
+主题色：默认系统取色（Material You），可在"个性化"中改用莫奈色板种子色；深色模式支持 跟随系统 / 浅色 / 深色。NavigationBar 两个目的地（首页 / 设置）。
 
 ### 5.1 首页
 
@@ -125,17 +125,16 @@ String buildBriefing(HolidaySegment seg, List<MakeupDay> makeups, int advanceDay
 3. **未来事件列表**（至多 3 条）：下一个假期 + 最近调休日，`ListTile` 形式；
 4. **空态**：次年数据未公布时显示「2027 年放假安排尚未发布」。
 
-### 5.2 设置页
+### 5.2 设置
 
-| 分组 | 项 | 控件 |
-|---|---|---|
-| 节前简报 | 开关 | `Switch` |
-| | 提前天数 1/2/3 | `SegmentedButton` |
-| | 发送时刻（默认 09:00） | `showTimePicker` |
-| 调休提醒 | 开关 | `Switch` |
-| | 提醒时刻（默认前一天 20:00） | `showTimePicker` |
-| 数据 | 年份 / 更新时间 / 手动刷新 | `ListTile` + SnackBar |
-| | 国务院公告原文链接 | `ListTile` →  url |
+设置主页为原生 Android 风格的入口列表（彩色圆形图标 + 摘要副标题），点击进入四个子页：
+
+| 子页 | 内容 |
+|---|---|
+| 提醒与通知 | 节前简报（开关 / 提前 1/2/3 天 `SegmentedButton` / 发送时刻 `showTimePicker`）；调休提醒（开关 / 提醒时刻）；系统通知权限状态与跳转 |
+| 个性化 | 主题色：系统取色（Material You）或莫奈色板种子色（圆形色块单选）；深色模式：跟随系统 / 浅色 / 深色 |
+| 数据 | 数据来源（NateScarlet/holiday-cn 项目链接）、已加载年份、上次更新时间、立即刷新、国务院公告原文链接 |
+| 关于 | 应用图标 / 名称 / 版本（`package_info_plus`）、简介、数据来源、开源许可（`LicensePage`） |
 
 任一项变更后即时重排通知，并以 SnackBar 确认。
 
@@ -148,10 +147,12 @@ lib/
   models/holiday.dart            # HolidayDay / Segment / MakeupDay + 分组算法
   data/holiday_repository.dart   # 获取、备源、缓存、派生时间线 (ChangeNotifier)
   data/app_settings.dart         # SharedPreferences 封装 (ChangeNotifier)
+  data/monet_colors.dart         # 莫奈主题色板
   notifications/notification_service.dart
   notifications/briefing_text.dart
   ui/home_page.dart
-  ui/settings_page.dart
+  ui/settings_page.dart          # 设置主页（四个子页入口）
+  ui/settings/                   # 提醒与通知 / 个性化 / 数据 / 关于 子页
   ui/widgets/                    # 假期卡片、状态条等
 test/
   segment_grouping_test.dart     # 使用 2025/2026 真实 fixture
@@ -188,3 +189,5 @@ assets/fixtures/                 # 2025.json / 2026.json 样本，离线测试�
 | 调休提醒时刻 | 前一天 20:00 |
 | 数据检查频率 | 每日一次 |
 | 通知滚动窗口 | 未来 45 天 |
+| 主题色 | 系统取色（Material You，可切莫奈色板） |
+| 深色模式 | 跟随系统 |

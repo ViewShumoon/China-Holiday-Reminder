@@ -29,7 +29,8 @@ class ChinaHolidayApp extends StatefulWidget {
 
 class _ChinaHolidayAppState extends State<ChinaHolidayApp>
     with WidgetsBindingObserver {
-  static const _seedColor = Color(0xFFBA1A1A);
+  /// 系统取色不可用平台上的回退种子色。
+  static const _fallbackSeed = Color(0xFFBA1A1A);
 
   int _index = 0;
   bool _ready = false;
@@ -87,36 +88,55 @@ class _ChinaHolidayAppState extends State<ChinaHolidayApp>
     );
   }
 
+  ThemeData _theme(AppSettings settings, Brightness brightness) {
+    if (settings.useSystemColors) {
+      // 主题色 = 系统取色，平台不支持时由回退种子色派生。
+      return ThemeData(
+        useSystemColors: true,
+        colorSchemeSeed: _fallbackSeed,
+        brightness: brightness,
+      );
+    }
+    // 主题色 = 莫奈色板种子色，关闭系统取色覆盖。
+    return ThemeData(
+      useSystemColors: false,
+      colorSchemeSeed: settings.seedColor,
+      brightness: brightness,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '假期提醒',
-      debugShowCheckedModeBanner: false,
-      // 主题色优先系统取色，平台不支持时由种子色派生；亮/暗色跟随系统。
-      theme: ThemeData(useSystemColors: true, colorSchemeSeed: _seedColor),
-      darkTheme: ThemeData(
-        useSystemColors: true,
-        colorSchemeSeed: _seedColor,
-        brightness: Brightness.dark,
-      ),
-      themeMode: ThemeMode.system,
-      home: _Shell(
-        index: _index,
-        onDestinationChanged: (value) => setState(() => _index = value),
-        child: IndexedStack(
-          index: _index,
-          children: [
-            HomePage(
-              repository: widget.repository,
-              settings: widget.settings,
+    return ListenableBuilder(
+      listenable: widget.settings,
+      builder: (context, _) {
+        final settings = widget.settings;
+        return MaterialApp(
+          title: '假期提醒',
+          debugShowCheckedModeBanner: false,
+          theme: _theme(settings, Brightness.light),
+          darkTheme: _theme(settings, Brightness.dark),
+          themeMode: settings.themeMode,
+          home: _Shell(
+            index: _index,
+            onDestinationChanged: (value) => setState(() => _index = value),
+            child: IndexedStack(
+              index: _index,
+              children: [
+                HomePage(
+                  repository: widget.repository,
+                  settings: widget.settings,
+                ),
+                SettingsPage(
+                  repository: widget.repository,
+                  settings: widget.settings,
+                  notifications: widget.notifications,
+                ),
+              ],
             ),
-            SettingsPage(
-              repository: widget.repository,
-              settings: widget.settings,
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

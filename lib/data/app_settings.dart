@@ -1,9 +1,13 @@
 /// 应用设置（SharedPreferences 封装，变更后即时通知重排）。
 library;
 
+import 'dart:ui' show Color;
+
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show TimeOfDay;
+import 'package:flutter/material.dart' show ThemeMode, TimeOfDay;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'monet_colors.dart';
 
 class AppSettings extends ChangeNotifier {
   AppSettings(this._prefs);
@@ -13,6 +17,8 @@ class AppSettings extends ChangeNotifier {
   static const _briefingTimeKey = 'settings_briefing_time';
   static const _makeupOnKey = 'settings_makeup_enabled';
   static const _makeupTimeKey = 'settings_makeup_time';
+  static const _themeModeKey = 'settings_theme_mode';
+  static const _seedColorKey = 'settings_seed_color';
 
   /// 通知滚动窗口：未来 45 天，足以覆盖最近 1 个假期段及其全部调休日。
   static const scheduleWindow = Duration(days: 45);
@@ -32,12 +38,19 @@ class AppSettings extends ChangeNotifier {
   TimeOfDay _briefingTime = const TimeOfDay(hour: 9, minute: 0);
   bool _makeupEnabled = true;
   TimeOfDay _makeupTime = const TimeOfDay(hour: 20, minute: 0);
+  ThemeMode _themeMode = ThemeMode.system;
+
+  /// null → 系统取色（Material You）；非 null → 色板种子色。
+  Color? _seedColor;
 
   bool get briefingEnabled => _briefingEnabled;
   int get advanceDays => _advanceDays;
   TimeOfDay get briefingTime => _briefingTime;
   bool get makeupEnabled => _makeupEnabled;
   TimeOfDay get makeupTime => _makeupTime;
+  ThemeMode get themeMode => _themeMode;
+  Color? get seedColor => _seedColor;
+  bool get useSystemColors => _seedColor == null;
 
   /// 从 SharedPreferences 恢复设置。
   Future<void> restore() async {
@@ -49,6 +62,14 @@ class AppSettings extends ChangeNotifier {
     _makeupEnabled = _prefs.getBool(_makeupOnKey) ?? true;
     _makeupTime = _readTime(_makeupTimeKey) ??
         const TimeOfDay(hour: 20, minute: 0);
+    _themeMode = switch (_prefs.getString(_themeModeKey)) {
+      'light' => ThemeMode.light,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
+    final seed = _prefs.getInt(_seedColorKey);
+    // 仅接受仍在色板内的持久化种子色，否则回退系统取色。
+    _seedColor = seed == null ? null : MonetColors.find(Color(seed))?.color;
     notifyListeners();
   }
 
@@ -80,6 +101,24 @@ class AppSettings extends ChangeNotifier {
   Future<void> setMakeupTime(TimeOfDay value) async {
     _makeupTime = value;
     await _prefs.setString(_makeupTimeKey, _writeTime(value));
+    notifyListeners();
+  }
+
+  Future<void> setThemeMode(ThemeMode value) async {
+    _themeMode = value;
+    await _prefs.setString(_themeModeKey, value.name);
+    notifyListeners();
+  }
+
+  /// [color] 为 null 时回到系统取色。
+  Future<void> setSeedColor(Color? color) async {
+    assert(color == null || MonetColors.find(color) != null);
+    _seedColor = color;
+    if (color == null) {
+      await _prefs.remove(_seedColorKey);
+    } else {
+      await _prefs.setInt(_seedColorKey, color.toARGB32());
+    }
     notifyListeners();
   }
 

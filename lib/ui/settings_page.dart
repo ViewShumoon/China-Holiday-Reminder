@@ -1,39 +1,59 @@
-/// 设置页（设计 §5.2）：任一项变更后即时重排通知，并以 SnackBar 确认。
+/// 设置主页：原生 Android 风格的入口列表，点击进入各子页。
 library;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../data/app_settings.dart';
 import '../data/holiday_repository.dart';
+import '../data/monet_colors.dart';
+import '../notifications/notification_service.dart';
+import 'settings/about_settings_page.dart';
+import 'settings/appearance_settings_page.dart';
+import 'settings/data_settings_page.dart';
+import 'settings/notification_settings_page.dart';
 import 'widgets/common.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({
     required this.repository,
     required this.settings,
+    required this.notifications,
     super.key,
   });
 
   final HolidayRepository repository;
   final AppSettings settings;
+  final NotificationService notifications;
 
-  void _confirm(BuildContext context, [String message = '已更新通知安排']) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(message), duration: const Duration(seconds: 1)),
+  String _reminderSummary() {
+    final parts = <String>[];
+    if (settings.briefingEnabled) {
+      parts.add(
+        '简报提前 ${settings.advanceDays} 天 ${formatClock(settings.briefingTime)}',
       );
+    }
+    if (settings.makeupEnabled) {
+      parts.add('调休 ${formatClock(settings.makeupTime)}');
+    }
+    return parts.isEmpty ? '全部提醒已关闭' : parts.join(' · ');
   }
 
-  Future<void> _pickTime(
-    BuildContext context,
-    TimeOfDay initial,
-    ValueChanged<TimeOfDay> onPicked,
-  ) async {
-    final picked = await showTimePicker(context: context, initialTime: initial);
-    if (picked != null) onPicked(picked);
+  String get _appearanceSummary {
+    final seed = settings.useSystemColors
+        ? '系统取色'
+        : MonetColors.find(settings.seedColor!)?.name ?? '莫奈色';
+    final mode = switch (settings.themeMode) {
+      ThemeMode.system => '跟随系统',
+      ThemeMode.light => '浅色',
+      ThemeMode.dark => '深色',
+    };
+    return '$seed · $mode';
+  }
+
+  String get _dataSummary {
+    if (repository.lastCheck == null) return '从未更新';
+    return '更新于 ${DateFormat('yyyy-MM-dd HH:mm').format(repository.lastCheck!)}';
   }
 
   @override
@@ -41,136 +61,84 @@ class SettingsPage extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([repository, settings]),
       builder: (context, _) {
+        final scheme = Theme.of(context).colorScheme;
         return ListView(
-          padding: const EdgeInsets.only(bottom: 24),
+          padding: const EdgeInsets.only(top: 8, bottom: 24),
           children: [
-            const SectionHeader('节前简报'),
-            SwitchListTile(
-              title: const Text('节前简报'),
-              subtitle: const Text('法定节假日开始前几天推送放假简报'),
-              value: settings.briefingEnabled,
-              onChanged: (value) async {
-                await settings.setBriefingEnabled(value);
-                if (context.mounted) _confirm(context);
-              },
-            ),
-            AnimatedOpacity(
-              opacity: settings.briefingEnabled ? 1 : 0.4,
-              duration: const Duration(milliseconds: 150),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: SegmentedButton<int>(
-                      segments: const [
-                        ButtonSegment(value: 1, label: Text('提前 1 天')),
-                        ButtonSegment(value: 2, label: Text('提前 2 天')),
-                        ButtonSegment(value: 3, label: Text('提前 3 天')),
-                      ],
-                      selected: {settings.advanceDays},
-                      showSelectedIcon: false,
-                      onSelectionChanged: settings.briefingEnabled
-                          ? (selection) async {
-                              await settings.setAdvanceDays(selection.first);
-                              if (context.mounted) _confirm(context);
-                            }
-                          : null,
-                    ),
-                  ),
-                  ListTile(
-                    title: const Text('发送时刻'),
-                    trailing: Text(formatClock(settings.briefingTime)),
-                    enabled: settings.briefingEnabled,
-                    onTap: () => _pickTime(context, settings.briefingTime, (
-                      time
-                    ) async {
-                      await settings.setBriefingTime(time);
-                      if (context.mounted) _confirm(context);
-                    }),
-                  ),
-                ],
+            _SettingsEntry(
+              icon: Icons.notifications_active_outlined,
+              background: scheme.primaryContainer,
+              foreground: scheme.onPrimaryContainer,
+              title: '提醒与通知',
+              subtitle: _reminderSummary(),
+              page: NotificationSettingsPage(
+                settings: settings,
+                notifications: notifications,
               ),
             ),
-            const SectionHeader('调休提醒'),
-            SwitchListTile(
-              title: const Text('调休提醒'),
-              subtitle: const Text('调休上班日前一天推送上班提醒'),
-              value: settings.makeupEnabled,
-              onChanged: (value) async {
-                await settings.setMakeupEnabled(value);
-                if (context.mounted) _confirm(context);
-              },
+            _SettingsEntry(
+              icon: Icons.palette_outlined,
+              background: scheme.tertiaryContainer,
+              foreground: scheme.onTertiaryContainer,
+              title: '个性化',
+              subtitle: _appearanceSummary,
+              page: AppearanceSettingsPage(settings: settings),
             ),
-            ListTile(
-              title: const Text('提醒时刻'),
-              subtitle: const Text('调休上班日的前一天'),
-              trailing: Text(formatClock(settings.makeupTime)),
-              enabled: settings.makeupEnabled,
-              onTap: () => _pickTime(context, settings.makeupTime, (time) async {
-                await settings.setMakeupTime(time);
-                if (context.mounted) _confirm(context);
-              }),
+            _SettingsEntry(
+              icon: Icons.storage_outlined,
+              background: scheme.secondaryContainer,
+              foreground: scheme.onSecondaryContainer,
+              title: '数据',
+              subtitle: _dataSummary,
+              page: DataSettingsPage(repository: repository),
             ),
-            const SectionHeader('数据'),
-            ListTile(
-              title: Text(
-                repository.loadedYears.isEmpty
-                    ? '尚无数据'
-                    : '已加载 ${repository.loadedYears.join('、')} 年安排',
-              ),
-              subtitle: Text(
-                repository.lastCheck == null
-                    ? '从未更新'
-                    : '更新于 ${DateFormat('yyyy-MM-dd HH:mm').format(repository.lastCheck!)}',
-              ),
+            _SettingsEntry(
+              icon: Icons.info_outline,
+              background: scheme.errorContainer,
+              foreground: scheme.onErrorContainer,
+              title: '关于',
+              subtitle: '应用简介 · 数据来源 · 开源许可',
+              page: const AboutSettingsPage(),
             ),
-            ListTile(
-              leading: repository.busy
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.sync),
-              title: const Text('立即刷新'),
-              subtitle: repository.lastError == null
-                  ? null
-                  : Text(
-                      repository.lastError!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-              enabled: !repository.busy,
-              onTap: () async {
-                await repository.refresh(force: true);
-                if (context.mounted) {
-                  _confirm(context, repository.lastError ?? '数据已更新');
-                }
-              },
-            ),
-            for (final url in repository.timeline.papers)
-              ListTile(
-                leading: const Icon(Icons.article_outlined),
-                title: const Text('国务院公告原文'),
-                subtitle: Text(
-                  url,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                onTap: () async {
-                  try {
-                    await launchUrl(
-                      Uri.parse(url),
-                      mode: LaunchMode.externalApplication,
-                    );
-                  } on Object {
-                    if (context.mounted) _confirm(context, '无法打开链接');
-                  }
-                },
-              ),
           ],
+        );
+      },
+    );
+  }
+}
+
+class _SettingsEntry extends StatelessWidget {
+  const _SettingsEntry({
+    required this.icon,
+    required this.background,
+    required this.foreground,
+    required this.title,
+    required this.subtitle,
+    required this.page,
+  });
+
+  final IconData icon;
+  final Color background;
+  final Color foreground;
+  final String title;
+  final String subtitle;
+  final Widget page;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+        alignment: Alignment.center,
+        child: Icon(icon, color: foreground),
+      ),
+      title: Text(title),
+      subtitle: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => page),
         );
       },
     );

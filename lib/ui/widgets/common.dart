@@ -13,6 +13,15 @@ String formatClock(TimeOfDay time) =>
     '${time.hour.toString().padLeft(2, '0')}:'
     '${time.minute.toString().padLeft(2, '0')}';
 
+/// 设置变更后的一行式即时反馈。
+void showQuickConfirm(BuildContext context, [String message = '已更新']) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 1)),
+    );
+}
+
 /// "10月1日" 形式（依赖 main 中的 initializeDateFormatting）。
 String formatMonthDay(DateTime date) =>
     DateFormat('M月d日', 'zh_CN').format(date);
