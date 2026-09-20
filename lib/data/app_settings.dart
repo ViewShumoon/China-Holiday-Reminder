@@ -14,7 +14,7 @@ class AppSettings extends ChangeNotifier {
   static const _makeupOnKey = 'settings_makeup_enabled';
   static const _makeupTimeKey = 'settings_makeup_time';
 
-  /// 通知滚动窗口：未来 45 天（iOS 有 64 条待触发通知上限）。
+  /// 通知滚动窗口：未来 45 天，足以覆盖最近 1 个假期段及其全部调休日。
   static const scheduleWindow = Duration(days: 45);
   static const allowedAdvanceDays = [1, 2, 3];
 

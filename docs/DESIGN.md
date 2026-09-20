@@ -1,7 +1,7 @@
 # 中国法定节假日提醒器 — 设计方案
 
 > 一款简单小巧的 Flutter 应用（Material Design 3），在法定节假日前推送简报、在调休上班日前推送提醒。
-> 本地优先、无后端、无账号，目标平台 Android + iOS。
+> 本地优先、无后端、无账号，目标平台 Android。
 
 ## 1. 需求与目标
 
@@ -99,7 +99,7 @@
 ### 4.2 调度规则
 
 - 仅在四个时机重算：启动 / 回前台 / 设置变更 / 数据刷新；
-- 重算方式：`cancelAll()` 后对**未来约 45 天**内的事件重新 `zonedSchedule`——iOS 有 64 条待触发本地通知上限，45 天窗口足以覆盖最近 1 个假期段及其全部调休日，且每次打开 App 都会滚动续排；
+- 重算方式：`cancelAll()` 后对**未来约 45 天**内的事件重新 `zonedSchedule`——45 天窗口足以覆盖最近 1 个假期段及其全部调休日，且每次打开 App 都会滚动续排；
 - Android 13+ 运行时申请 `POST_NOTIFICATIONS`；
 - 调度优先 `AndroidScheduleMode.exactAllowWhileIdle`，捕获系统精确闹钟权限异常后自动降级 `inexactAllowWhileIdle`。
 
@@ -162,12 +162,12 @@ assets/fixtures/                 # 2025.json / 2026.json 样本，离线测试�
 
 ## 7. 实施步骤
 
-1. `flutter create --platforms android,ios`，`flutter pub add flutter_local_notifications timezone http shared_preferences intl`；
+1. `flutter create --platforms android`，`flutter pub add flutter_local_notifications timezone http shared_preferences intl`；
 2. 模型 + 分组算法 + 单测（先测试后实现）；
 3. `HolidayRepository`（网络 + 缓存）与 `AppSettings`；
 4. `NotificationService` + `briefing_text` 及其单测；
 5. 首页 / 设置页 UI + M3 主题；
-6. 平台配置：Android manifest（`POST_NOTIFICATIONS`、`INTERNET`、minSdk）、iOS `AppDelegate` 插件注册与通知授权；
+6. 平台配置：Android manifest（`POST_NOTIFICATIONS`、`INTERNET`、minSdk）；
 7. `flutter analyze` 零告警、`flutter test` 全绿，Android 模拟器手动验证通知弹出。
 
 ## 8. 验收标准
@@ -177,7 +177,7 @@ assets/fixtures/                 # 2025.json / 2026.json 样本，离线测试�
 - [ ] 以 2026 年真实数据验证：中秋与国庆拆为两段；9/20、10/10 正确关联国庆节；
 - [ ] 设定"明天 = 2026-09-21"场景时，简报与调休文案内容正确；
 - [ ] 断网启动 App 可凭缓存正常展示首页与调度通知；
-- [ ] Android 13+ 与 iOS 首次启动正确引导通知授权。
+- [ ] Android 13+ 首次启动正确引导通知授权。
 
 ## 9. 默认值汇总
 

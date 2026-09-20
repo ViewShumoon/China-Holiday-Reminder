@@ -120,11 +120,6 @@ class NotificationService {
     await _plugin.initialize(
       settings: const InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-        iOS: DarwinInitializationSettings(
-          requestAlertPermission: false,
-          requestBadgePermission: false,
-          requestSoundPermission: false,
-        ),
       ),
     );
     final android = _plugin.resolvePlatformSpecificImplementation<
@@ -149,24 +144,13 @@ class NotificationService {
     _initialized = true;
   }
 
-  /// Android 13+ / iOS 首次启动引导通知授权。
+  /// Android 13+ 首次启动引导通知授权。
   Future<bool> requestPermission() async {
     final android = _plugin.resolvePlatformSpecificImplementation<
       AndroidFlutterLocalNotificationsPlugin
     >();
     if (android != null) {
       return await android.requestNotificationsPermission() ?? false;
-    }
-    final ios = _plugin.resolvePlatformSpecificImplementation<
-      IOSFlutterLocalNotificationsPlugin
-    >();
-    if (ios != null) {
-      return await ios.requestPermissions(
-            alert: true,
-            badge: true,
-            sound: true,
-          ) ??
-          false;
     }
     return true;
   }
@@ -187,7 +171,6 @@ class NotificationService {
             : makeupChannelId,
         event.kind == NotificationKind.briefing ? '节前简报' : '调休提醒',
       ),
-      iOS: const DarwinNotificationDetails(),
     );
     final scheduledDate = tz.TZDateTime.from(event.scheduledAt, tz.local);
     final mode = await _preferredScheduleMode();
