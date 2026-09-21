@@ -19,10 +19,23 @@ class AppSettings extends ChangeNotifier {
   static const _makeupTimeKey = 'settings_makeup_time';
   static const _themeModeKey = 'settings_theme_mode';
   static const _seedColorKey = 'settings_seed_color';
+  static const _firstDayOfWeekKey = 'settings_first_day_of_week';
+  static const _use24HourKey = 'settings_use_24h';
 
   /// 通知滚动窗口：未来 45 天，足以覆盖最近 1 个假期段及其全部调休日。
   static const scheduleWindow = Duration(days: 45);
   static const allowedAdvanceDays = [1, 2, 3];
+
+  /// 一周起始日合法取值（对应 DateTime.weekday：1=周一 … 7=周日）。
+  static const allowedFirstDays = [
+    DateTime.monday,
+    DateTime.tuesday,
+    DateTime.wednesday,
+    DateTime.thursday,
+    DateTime.friday,
+    DateTime.saturday,
+    DateTime.sunday,
+  ];
 
   final SharedPreferences _prefs;
 
@@ -39,6 +52,8 @@ class AppSettings extends ChangeNotifier {
   bool _makeupEnabled = true;
   TimeOfDay _makeupTime = const TimeOfDay(hour: 20, minute: 0);
   ThemeMode _themeMode = ThemeMode.system;
+  int _firstDayOfWeek = DateTime.monday;
+  bool _use24Hour = true;
 
   /// null → 系统取色（Material You）；非 null → 色板种子色。
   Color? _seedColor;
@@ -51,6 +66,8 @@ class AppSettings extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
   Color? get seedColor => _seedColor;
   bool get useSystemColors => _seedColor == null;
+  int get firstDayOfWeek => _firstDayOfWeek;
+  bool get use24Hour => _use24Hour;
 
   /// 从 SharedPreferences 恢复设置。
   Future<void> restore() async {
@@ -70,6 +87,11 @@ class AppSettings extends ChangeNotifier {
     final seed = _prefs.getInt(_seedColorKey);
     // 仅接受仍在色板内的持久化种子色，否则回退系统取色。
     _seedColor = seed == null ? null : MonetColors.find(Color(seed))?.color;
+    _firstDayOfWeek = _prefs.getInt(_firstDayOfWeekKey) ?? DateTime.monday;
+    if (!allowedFirstDays.contains(_firstDayOfWeek)) {
+      _firstDayOfWeek = DateTime.monday;
+    }
+    _use24Hour = _prefs.getBool(_use24HourKey) ?? true;
     notifyListeners();
   }
 
@@ -119,6 +141,19 @@ class AppSettings extends ChangeNotifier {
     } else {
       await _prefs.setInt(_seedColorKey, color.toARGB32());
     }
+    notifyListeners();
+  }
+
+  Future<void> setFirstDayOfWeek(int value) async {
+    assert(allowedFirstDays.contains(value));
+    _firstDayOfWeek = value;
+    await _prefs.setInt(_firstDayOfWeekKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setUse24Hour(bool value) async {
+    _use24Hour = value;
+    await _prefs.setBool(_use24HourKey, value);
     notifyListeners();
   }
 

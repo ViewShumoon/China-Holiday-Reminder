@@ -45,4 +45,30 @@ void main() {
     final restored = await AppSettings.load();
     expect(restored.useSystemColors, isTrue);
   });
+
+  test('默认：周一为一周开始 + 24 小时制', () async {
+    SharedPreferences.setMockInitialValues({});
+    final settings = await AppSettings.load();
+    expect(settings.firstDayOfWeek, DateTime.monday);
+    expect(settings.use24Hour, isTrue);
+  });
+
+  test('一周开始 / 时间格式跨实例持久化', () async {
+    SharedPreferences.setMockInitialValues({});
+    final first = await AppSettings.load();
+    await first.setFirstDayOfWeek(DateTime.sunday);
+    await first.setUse24Hour(false);
+
+    final restored = await AppSettings.load();
+    expect(restored.firstDayOfWeek, DateTime.sunday);
+    expect(restored.use24Hour, isFalse);
+  });
+
+  test('非法的一周开始值回退周一', () async {
+    SharedPreferences.setMockInitialValues({
+      'settings_first_day_of_week': 99,
+    });
+    final settings = await AppSettings.load();
+    expect(settings.firstDayOfWeek, DateTime.monday);
+  });
 }

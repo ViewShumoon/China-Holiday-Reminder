@@ -96,7 +96,10 @@ class NotificationSettingsPage extends StatelessWidget {
                             ListTile(
                               title: const Text('发送时刻'),
                               trailing: Text(
-                                formatClock(settings.briefingTime),
+                                formatClock(
+                                  settings.briefingTime,
+                                  use24: settings.use24Hour,
+                                ),
                               ),
                               enabled: settings.briefingEnabled,
                               onTap: () => _pickTime(
@@ -128,7 +131,12 @@ class NotificationSettingsPage extends StatelessWidget {
                       ListTile(
                         title: const Text('提醒时刻'),
                         subtitle: const Text('调休上班日的前一天'),
-                        trailing: Text(formatClock(settings.makeupTime)),
+                        trailing: Text(
+                          formatClock(
+                            settings.makeupTime,
+                            use24: settings.use24Hour,
+                          ),
+                        ),
                         enabled: settings.makeupEnabled,
                         onTap: () => _pickTime(context, settings.makeupTime, (
                           time,

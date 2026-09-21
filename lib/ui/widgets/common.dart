@@ -8,10 +8,16 @@ import '../../notifications/briefing_text.dart' show weekdayCn;
 
 export '../../notifications/briefing_text.dart' show monthDay, weekdayCn;
 
-/// "09:00" 形式。
-String formatClock(TimeOfDay time) =>
-    '${time.hour.toString().padLeft(2, '0')}:'
-    '${time.minute.toString().padLeft(2, '0')}';
+/// "09:00"（24 小时制）或 "上午9:00"（12 小时制）形式。
+String formatClock(TimeOfDay time, {bool use24 = true}) {
+  final minute = time.minute.toString().padLeft(2, '0');
+  if (use24) {
+    return '${time.hour.toString().padLeft(2, '0')}:$minute';
+  }
+  final period = time.hour < 12 ? '上午' : '下午';
+  final hour = time.hour % 12;
+  return '$period${hour == 0 ? 12 : hour}:$minute';
+}
 
 /// 设置变更后的一行式即时反馈。
 void showQuickConfirm(BuildContext context, [String message = '已更新']) {

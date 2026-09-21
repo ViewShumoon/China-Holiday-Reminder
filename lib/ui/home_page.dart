@@ -2,20 +2,16 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../data/app_settings.dart';
 import '../data/holiday_repository.dart';
 import '../models/holiday.dart';
 import 'widgets/common.dart';
+import 'widgets/mini_calendar.dart';
 import 'widgets/status_banner.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({
-    required this.repository,
-    required this.settings,
-    super.key,
-  });
+  const HomePage({required this.repository, required this.settings, super.key});
 
   final HolidayRepository repository;
   final AppSettings settings;
@@ -49,7 +45,11 @@ class HomePage extends StatelessWidget {
               for (final event in upcoming) event.tile(context),
             ],
             if (next == null && upcoming.isEmpty)
-              _EmptyHint(repository: repository, timeline: timeline, today: today),
+              _EmptyHint(
+                repository: repository,
+                timeline: timeline,
+                today: today,
+              ),
           ],
         );
         return Scaffold(
@@ -118,10 +118,7 @@ class _EventItem {
   Widget tile(BuildContext context) => tileBuilder(context);
 }
 
-List<_EventItem> _upcomingEvents(
-  HolidayTimeline timeline,
-  DateTime today,
-) {
+List<_EventItem> _upcomingEvents(HolidayTimeline timeline, DateTime today) {
   final items = <_EventItem>[];
   for (final segment in timeline.segments) {
     if (segment.start.isAfter(today)) {
@@ -134,7 +131,7 @@ List<_EventItem> _upcomingEvents(
             title: Text('${segment.name}假期'),
             subtitle: Text(
               '放假 ${segment.lengthInDays} 天'
-              '${makeupCount > 0 ? ' · 含调休 $makeupCount 天' : ''}',
+              '${makeupCount > 0 ? ' | 调休 $makeupCount 天' : ''}',
             ),
           ),
         ),
@@ -196,42 +193,48 @@ class _NextHolidayCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    segment.name,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                if (countdown <= 0)
-                  Text(
-                    '进行中',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: scheme.primary,
-                    ),
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  child: Row(
                     children: [
-                      Text(
-                        '$countdown',
-                        style: theme.textTheme.displayMedium?.copyWith(
-                          color: scheme.primary,
-                          fontWeight: FontWeight.bold,
+                      if (countdown <= 0)
+                        Text(
+                          '进行中',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: scheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      else
+                        Text(
+                          '$countdown',
+                          style: theme.textTheme.displayMedium?.copyWith(
+                            color: scheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      Text('天后开始', style: theme.textTheme.bodySmall),
+                      Text('天后', style: theme.textTheme.headlineMedium),
                     ],
                   ),
+                ),
+                Text(
+                  segment.name,
+                  style: theme.textTheme.headlineMedium
+                ),
               ],
+            ),
+
+            const SizedBox(height: 12),
+            MiniCalendar(
+              segment: segment,
+              makeups: makeups,
+              today: today,
+              firstDayOfWeek: settings.firstDayOfWeek,
             ),
             const SizedBox(height: 8),
             Text(
-              '${formatDateWeekday(segment.start)} 至 '
-              '${formatDateWeekday(segment.end)} · 放假 ${segment.lengthInDays} 天',
+              '共放假 ${segment.lengthInDays} 天',
               style: theme.textTheme.bodyMedium,
             ),
+
             if (makeups.isNotEmpty) ...[
               const SizedBox(height: 12),
               Wrap(
@@ -254,12 +257,17 @@ class _NextHolidayCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.notifications_active_outlined, size: 16, color: scheme.outline),
+                Icon(
+                  Icons.notifications_active_outlined,
+                  size: 16,
+                  color: scheme.outline,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     settings.briefingEnabled
-                        ? '将于 ${DateFormat('M月d日 HH:mm', 'zh_CN').format(briefingAt)} 发送节前简报'
+                        ? '将于 ${formatMonthDay(briefingAt)} '
+                            '${formatClock(settings.briefingTime, use24: settings.use24Hour)} 发送节前简报'
                         : '节前简报已关闭',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: scheme.outline,

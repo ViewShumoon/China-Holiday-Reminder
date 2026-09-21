@@ -23,7 +23,7 @@ class AppearanceSettingsPage extends StatelessWidget {
         return Scaffold(
           body: CustomScrollView(
             physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics()
+              parent: AlwaysScrollableScrollPhysics(),
             ),
             slivers: <Widget>[
               SliverAppBar(
@@ -33,20 +33,101 @@ class AppearanceSettingsPage extends StatelessWidget {
               ),
               SliverList(
                 delegate: SliverChildListDelegate([
-                  const SectionHeader('主题色'),
+                  const SectionHeader('时间日期格式'),
                   SettingsGroup(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            Text('一周的开始', style: theme.textTheme.titleMedium),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: SegmentedButton<int>(
+                                segments: const [
+                                  ButtonSegment(
+                                    value: DateTime.monday,
+                                    label: Text('周一'),
+                                  ),
+                                  ButtonSegment(
+                                    value: DateTime.tuesday,
+                                    label: Text('周二'),
+                                  ),
+                                  ButtonSegment(
+                                    value: DateTime.wednesday,
+                                    label: Text('周三'),
+                                  ),
+                                  ButtonSegment(
+                                    value: DateTime.thursday,
+                                    label: Text('周四'),
+                                  ),
+                                  ButtonSegment(
+                                    value: DateTime.friday,
+                                    label: Text('周五'),
+                                  ),
+                                  ButtonSegment(
+                                    value: DateTime.saturday,
+                                    label: Text('周六'),
+                                  ),
+                                  ButtonSegment(
+                                    value: DateTime.sunday,
+                                    label: Text('周日'),
+                                  ),
+                                ],
+                                selected: {settings.firstDayOfWeek},
+                                showSelectedIcon: false,
+                                onSelectionChanged: (selection) async {
+                                  await settings.setFirstDayOfWeek(
+                                    selection.first,
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            Text('时间格式', style: theme.textTheme.titleMedium),
+                            SegmentedButton<bool>(
+                              segments: const [
+                                ButtonSegment(
+                                  value: false,
+                                  label: Text('12 小时制'),
+                                ),
+                                ButtonSegment(
+                                  value: true,
+                                  label: Text('24 小时制'),
+                                ),
+                              ],
+                              selected: {settings.use24Hour},
+                              showSelectedIcon: false,
+                              onSelectionChanged: (selection) async {
+                                await settings.setUse24Hour(selection.first);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SectionHeader('外观'),
+                  SettingsGroup(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(20),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '系统取色跟随手机壁纸（Material You），莫奈色板取自印象派名画。',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.outline,
-                              ),
-                            ),
+                            // Text(
+                            //   '系统取色跟随手机壁纸（Material You），莫奈色板取自印象派名画。',
+                            //   style: theme.textTheme.bodyMedium?.copyWith(
+                            //     color: theme.colorScheme.outline,
+                            //   ),
+                            // ),
                             const SizedBox(height: 20),
                             Wrap(
                               spacing: 12,
@@ -82,36 +163,36 @@ class AppearanceSettingsPage extends StatelessWidget {
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                  const SectionHeader('深色模式'),
-                  SettingsGroup(
-                    children: [
                       Padding(
                         padding: const EdgeInsets.all(16),
-                        child: SegmentedButton<ThemeMode>(
-                          segments: const [
-                            ButtonSegment(
-                              value: ThemeMode.system,
-                              icon: Icon(Icons.brightness_auto_outlined),
-                              label: Text('跟随系统'),
-                            ),
-                            ButtonSegment(
-                              value: ThemeMode.light,
-                              icon: Icon(Icons.light_mode_outlined),
-                              label: Text('浅色'),
-                            ),
-                            ButtonSegment(
-                              value: ThemeMode.dark,
-                              icon: Icon(Icons.dark_mode_outlined),
-                              label: Text('深色'),
+                        child: Column(
+                          children: [
+                            Text('深色模式', style: theme.textTheme.titleMedium),
+                            SegmentedButton<ThemeMode>(
+                              segments: const [
+                                ButtonSegment(
+                                  value: ThemeMode.system,
+                                  icon: Icon(Icons.brightness_auto_outlined),
+                                  label: Text('跟随系统'),
+                                ),
+                                ButtonSegment(
+                                  value: ThemeMode.light,
+                                  icon: Icon(Icons.light_mode_outlined),
+                                  label: Text('浅色'),
+                                ),
+                                ButtonSegment(
+                                  value: ThemeMode.dark,
+                                  icon: Icon(Icons.dark_mode_outlined),
+                                  label: Text('深色'),
+                                ),
+                              ],
+                              selected: {settings.themeMode},
+                              showSelectedIcon: false,
+                              onSelectionChanged: (selection) async {
+                                await settings.setThemeMode(selection.first);
+                              },
                             ),
                           ],
-                          selected: {settings.themeMode},
-                          showSelectedIcon: false,
-                          onSelectionChanged: (selection) async {
-                            await settings.setThemeMode(selection.first);
-                          },
                         ),
                       ),
                     ],

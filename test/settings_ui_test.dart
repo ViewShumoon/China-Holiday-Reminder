@@ -40,6 +40,41 @@ void main() {
     await tester.tap(find.text('伦敦雾'));
     await tester.pumpAndSettle();
     expect(find.text('主题色已更新'), findsOneWidget);
+
+    // 向下滚动到懒加载的「一周的开始 / 时间格式」分组。
+    await tester.scrollUntilVisible(find.text('时间格式'), 300);
+    expect(find.text('一周的开始'), findsOneWidget);
+    expect(find.text('时间格式'), findsOneWidget);
+  });
+
+  testWidgets('个性化：切换一周开始与时间格式并持久化', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final settings = await AppSettings.load();
+    await tester.pumpWidget(
+      MaterialApp(home: SettingsPage(
+        repository: await HolidayRepository.load(),
+        settings: settings,
+        notifications: NotificationService(),
+      )),
+    );
+    await tester.pump();
+    await tester.tap(find.text('个性化'));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(find.text('周六'), 200);
+    await tester.tap(find.text('周六'));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(find.text('12 小时制'), 200);
+    await tester.tap(find.text('12 小时制'));
+    await tester.pumpAndSettle();
+
+    expect(settings.firstDayOfWeek, DateTime.saturday);
+    expect(settings.use24Hour, isFalse);
+
+    final restored = await AppSettings.load();
+    expect(restored.firstDayOfWeek, DateTime.saturday);
+    expect(restored.use24Hour, isFalse);
   });
 
   testWidgets('进入数据子页可看到来源与刷新', (tester) async {

@@ -30,11 +30,14 @@ class SettingsPage extends StatelessWidget {
     final parts = <String>[];
     if (settings.briefingEnabled) {
       parts.add(
-        '简报提前 ${settings.advanceDays} 天 ${formatClock(settings.briefingTime)}',
+        '简报提前 ${settings.advanceDays} 天 '
+        '${formatClock(settings.briefingTime, use24: settings.use24Hour)}',
       );
     }
     if (settings.makeupEnabled) {
-      parts.add('调休 ${formatClock(settings.makeupTime)}');
+      parts.add(
+        '调休 ${formatClock(settings.makeupTime, use24: settings.use24Hour)}',
+      );
     }
     return parts.isEmpty ? '全部提醒已关闭' : parts.join(' · ');
   }
