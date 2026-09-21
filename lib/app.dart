@@ -155,7 +155,6 @@ class _Shell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(index == 0 ? '假期提醒' : '设置')),
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,

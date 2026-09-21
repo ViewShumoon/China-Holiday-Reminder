@@ -127,7 +127,7 @@ String buildBriefing(HolidaySegment seg, List<MakeupDay> makeups, int advanceDay
 
 ### 5.2 设置
 
-设置主页为原生 Android 风格的入口列表（彩色圆形图标 + 摘要副标题），点击进入四个子页：
+设置主页与子页均为 MD3 大标题折叠栏（`SliverAppBar.large`：进入时大标题，上滑渐缩对齐返回箭头，下拉还原）；内容采用大圆角分组卡片（`surfaceContainerHigh` 背景 + 行间细分割线），图标为单色、无圆形底色背景。设置主页四个入口点击进入子页：
 
 | 子页 | 内容 |
 |---|---|

@@ -29,72 +29,97 @@ class DataSettingsPage extends StatelessWidget {
       listenable: repository,
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(title: const Text('数据')),
-          body: ListView(
-            padding: const EdgeInsets.only(bottom: 24),
-            children: [
-              const SectionHeader('数据来源'),
-              ListTile(
-                leading: const Icon(Icons.public),
-                title: const Text('NateScarlet/holiday-cn'),
-                subtitle: const Text('国务院公告结构化数据，点击项目主页'),
-                onTap: () => _openUrl(context, _repoUrl),
+          body: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics()
+            ),
+            slivers: <Widget>[
+              SliverAppBar(
+                pinned: true,
+                expandedHeight: 160.0,
+                flexibleSpace: const FlexibleSpaceBar(title: Text('数据')),
               ),
-              const SectionHeader('更新状态'),
-              ListTile(
-                leading: const Icon(Icons.inventory_2_outlined),
-                title: Text(
-                  repository.loadedYears.isEmpty
-                      ? '尚无数据'
-                      : '已加载 ${repository.loadedYears.join('、')} 年安排',
-                ),
-                subtitle: Text(
-                  repository.lastCheck == null
-                      ? '从未更新'
-                      : '上次更新 ${DateFormat('yyyy-MM-dd HH:mm').format(repository.lastCheck!)}',
-                ),
-              ),
-              ListTile(
-                leading: repository.busy
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.sync),
-                title: const Text('立即刷新'),
-                subtitle: Text(
-                  repository.lastError ??
-                      '每天启动 / 回前台时自动检查一次，也可手动刷新',
-                  style: repository.lastError == null
-                      ? null
-                      : TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-                enabled: !repository.busy,
-                onTap: () async {
-                  await repository.refresh(force: true);
-                  if (context.mounted) {
-                    showQuickConfirm(
-                      context,
-                      repository.lastError ?? '数据已更新',
-                    );
-                  }
-                },
-              ),
-              if (repository.timeline.papers.isNotEmpty) ...[
-                const SectionHeader('国务院公告原文'),
-                for (final url in repository.timeline.papers)
-                  ListTile(
-                    leading: const Icon(Icons.article_outlined),
-                    title: Text(
-                      url,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    onTap: () => _openUrl(context, url),
+              SliverList(
+                delegate: SliverChildListDelegate([
+                  const SectionHeader('数据来源'),
+                  SettingsGroup(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.public),
+                        title: const Text('NateScarlet/holiday-cn'),
+                        subtitle: const Text('国务院公告结构化数据，点击项目主页'),
+                        onTap: () => _openUrl(context, _repoUrl),
+                      ),
+                    ],
                   ),
-              ],
+                  const SectionHeader('更新状态'),
+                  SettingsGroup(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.inventory_2_outlined),
+                        title: Text(
+                          repository.loadedYears.isEmpty
+                              ? '尚无数据'
+                              : '已加载 ${repository.loadedYears.join('、')} 年安排',
+                        ),
+                        subtitle: Text(
+                          repository.lastCheck == null
+                              ? '从未更新'
+                              : '上次更新 ${DateFormat('yyyy-MM-dd HH:mm').format(repository.lastCheck!)}',
+                        ),
+                      ),
+                      ListTile(
+                        leading: repository.busy
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.sync),
+                        title: const Text('立即刷新'),
+                        subtitle: Text(
+                          repository.lastError ?? '每天启动 / 回前台时自动检查一次，也可手动刷新',
+                          style: repository.lastError == null
+                              ? null
+                              : TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                        ),
+                        enabled: !repository.busy,
+                        onTap: () async {
+                          await repository.refresh(force: true);
+                          if (context.mounted) {
+                            showQuickConfirm(
+                              context,
+                              repository.lastError ?? '数据已更新',
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  if (repository.timeline.papers.isNotEmpty) ...[
+                    const SectionHeader('国务院公告原文'),
+                    SettingsGroup(
+                      children: [
+                        for (final url in repository.timeline.papers)
+                          ListTile(
+                            leading: const Icon(Icons.article_outlined),
+                            title: Text(
+                              url,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            onTap: () => _openUrl(context, url),
+                          ),
+                      ],
+                    ),
+                  ],
+                ]),
+              ),
             ],
           ),
         );

@@ -19,81 +19,104 @@ class AppearanceSettingsPage extends StatelessWidget {
     return ListenableBuilder(
       listenable: settings,
       builder: (context, _) {
+        final theme = Theme.of(context);
         return Scaffold(
-          appBar: AppBar(title: const Text('个性化')),
-          body: ListView(
-            padding: const EdgeInsets.only(bottom: 24),
-            children: [
-              const SectionHeader('主题色'),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  '系统取色跟随手机壁纸（Material You），莫奈色板取自印象派名画。',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                ),
+          body: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics()
+            ),
+            slivers: <Widget>[
+              SliverAppBar(
+                pinned: true,
+                expandedHeight: 160.0,
+                flexibleSpace: const FlexibleSpaceBar(title: Text('个性化')),
               ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 16,
-                  children: [
-                    _ColorChoice(
-                      label: '系统取色',
-                      tooltip: '跟随手机壁纸的动态取色',
-                      selected: settings.useSystemColors,
-                      onTap: () async {
-                        await settings.setSeedColor(null);
-                        if (context.mounted) showQuickConfirm(context, '主题色已更新');
-                      },
-                      swatch: const _SystemColorsSwatch(),
-                    ),
-                    for (final monet in MonetColors.palette)
-                      _ColorChoice(
-                        label: monet.name,
-                        tooltip: monet.painting,
-                        selected: settings.seedColor == monet.color,
-                        onTap: () async {
-                          await settings.setSeedColor(monet.color);
-                          if (context.mounted) {
-                            showQuickConfirm(context, '主题色已更新');
-                          }
-                        },
-                        swatch: ColoredBox(color: monet.color),
+              SliverList(
+                delegate: SliverChildListDelegate([
+                  const SectionHeader('主题色'),
+                  SettingsGroup(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '系统取色跟随手机壁纸（Material You），莫奈色板取自印象派名画。',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.outline,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 16,
+                              children: [
+                                _ColorChoice(
+                                  label: '系统取色',
+                                  tooltip: '跟随手机壁纸的动态取色',
+                                  selected: settings.useSystemColors,
+                                  onTap: () async {
+                                    await settings.setSeedColor(null);
+                                    if (context.mounted) {
+                                      showQuickConfirm(context, '主题色已更新');
+                                    }
+                                  },
+                                  swatch: const _SystemColorsSwatch(),
+                                ),
+                                for (final monet in MonetColors.palette)
+                                  _ColorChoice(
+                                    label: monet.name,
+                                    tooltip: monet.painting,
+                                    selected: settings.seedColor == monet.color,
+                                    onTap: () async {
+                                      await settings.setSeedColor(monet.color);
+                                      if (context.mounted) {
+                                        showQuickConfirm(context, '主题色已更新');
+                                      }
+                                    },
+                                    swatch: ColoredBox(color: monet.color),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                  ],
-                ),
-              ),
-              const SectionHeader('深色模式'),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SegmentedButton<ThemeMode>(
-                  segments: const [
-                    ButtonSegment(
-                      value: ThemeMode.system,
-                      icon: Icon(Icons.brightness_auto_outlined),
-                      label: Text('跟随系统'),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.light,
-                      icon: Icon(Icons.light_mode_outlined),
-                      label: Text('浅色'),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.dark,
-                      icon: Icon(Icons.dark_mode_outlined),
-                      label: Text('深色'),
-                    ),
-                  ],
-                  selected: {settings.themeMode},
-                  showSelectedIcon: false,
-                  onSelectionChanged: (selection) async {
-                    await settings.setThemeMode(selection.first);
-                  },
-                ),
+                    ],
+                  ),
+                  const SectionHeader('深色模式'),
+                  SettingsGroup(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: SegmentedButton<ThemeMode>(
+                          segments: const [
+                            ButtonSegment(
+                              value: ThemeMode.system,
+                              icon: Icon(Icons.brightness_auto_outlined),
+                              label: Text('跟随系统'),
+                            ),
+                            ButtonSegment(
+                              value: ThemeMode.light,
+                              icon: Icon(Icons.light_mode_outlined),
+                              label: Text('浅色'),
+                            ),
+                            ButtonSegment(
+                              value: ThemeMode.dark,
+                              icon: Icon(Icons.dark_mode_outlined),
+                              label: Text('深色'),
+                            ),
+                          ],
+                          selected: {settings.themeMode},
+                          showSelectedIcon: false,
+                          onSelectionChanged: (selection) async {
+                            await settings.setThemeMode(selection.first);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ]),
               ),
             ],
           ),

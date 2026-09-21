@@ -52,9 +52,12 @@ class HomePage extends StatelessWidget {
               _EmptyHint(repository: repository, timeline: timeline, today: today),
           ],
         );
-        return RefreshIndicator(
-          onRefresh: () => repository.refresh(force: true),
-          child: body,
+        return Scaffold(
+          appBar: AppBar(title: const Text('假期提醒')),
+          body: RefreshIndicator(
+            onRefresh: () => repository.refresh(force: true),
+            child: body,
+          ),
         );
       },
     );
