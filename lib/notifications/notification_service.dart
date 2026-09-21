@@ -179,6 +179,9 @@ class NotificationService {
     }
   }
 
+  /// 全量清除（本地渠道关闭时调用）。
+  Future<void> cancelAll() => _plugin.cancelAll();
+
   Future<void> _scheduleOne(ScheduledNotification event) async {
     final details = NotificationDetails(
       android: AndroidNotificationDetails(

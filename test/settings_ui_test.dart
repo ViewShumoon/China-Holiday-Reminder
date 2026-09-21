@@ -3,11 +3,14 @@ library;
 
 import 'package:china_holiday_reminder/data/app_settings.dart';
 import 'package:china_holiday_reminder/data/holiday_repository.dart';
+import 'package:china_holiday_reminder/notifications/calendar_service.dart';
 import 'package:china_holiday_reminder/notifications/notification_service.dart';
 import 'package:china_holiday_reminder/ui/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'fake_calendar_bridge.dart';
 
 Future<SettingsPage> _page() async {
   SharedPreferences.setMockInitialValues({});
@@ -15,6 +18,7 @@ Future<SettingsPage> _page() async {
     repository: await HolidayRepository.load(),
     settings: await AppSettings.load(),
     notifications: NotificationService(),
+    calendar: CalendarService(bridge: FakeCalendarBridge()),
   );
 }
 
@@ -55,6 +59,7 @@ void main() {
         repository: await HolidayRepository.load(),
         settings: settings,
         notifications: NotificationService(),
+        calendar: CalendarService(bridge: FakeCalendarBridge()),
       )),
     );
     await tester.pump();
@@ -84,5 +89,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('NateScarlet/holiday-cn'), findsOneWidget);
     expect(find.text('立即刷新'), findsOneWidget);
+  });
+
+  testWidgets('提醒与通知：通知方式多选与权限分组', (tester) async {
+    SharedPreferences.setMockInitialValues({'settings_channel_calendar': false});
+    final settings = await AppSettings.load();
+    await tester.pumpWidget(
+      MaterialApp(home: SettingsPage(
+        repository: await HolidayRepository.load(),
+        settings: settings,
+        notifications: NotificationService(),
+        calendar: CalendarService(bridge: FakeCalendarBridge()),
+      )),
+    );
+    await tester.pump();
+    await tester.tap(find.text('提醒与通知'));
+    await tester.pumpAndSettle();
+
+    // 两个渠道条目渲染，未选渠道时权限分组不出现。
+    expect(find.text('通知方式'), findsOneWidget);
+    expect(find.text('系统日历事件（优先）'), findsOneWidget);
+    expect(find.text('App 本地通知（备选）'), findsOneWidget);
+    expect(find.text('权限与系统设置'), findsNothing);
+
+    // 勾选日历渠道 → 权限行出现（假桥已授予）。
+    await tester.tap(find.text('系统日历事件（优先）'));
+    await tester.pumpAndSettle();
+    expect(settings.channelCalendar, isTrue);
+    expect(find.text('权限与系统设置'), findsOneWidget);
+    expect(find.text('日历权限'), findsOneWidget);
+    expect(find.text('通知权限'), findsNothing);
+
+    // 取消勾选 → 权限分组消失。
+    await tester.tap(find.text('系统日历事件（优先）'));
+    await tester.pumpAndSettle();
+    expect(settings.channelCalendar, isFalse);
+    expect(find.text('权限与系统设置'), findsNothing);
   });
 }

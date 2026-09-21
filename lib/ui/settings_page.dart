@@ -7,27 +7,36 @@ import 'package:intl/intl.dart';
 import '../data/app_settings.dart';
 import '../data/holiday_repository.dart';
 import '../data/monet_colors.dart';
+import '../notifications/calendar_service.dart';
 import '../notifications/notification_service.dart';
 import 'settings/about_settings_page.dart';
 import 'settings/appearance_settings_page.dart';
 import 'settings/data_settings_page.dart';
 import 'settings/notification_settings_page.dart';
 import 'widgets/common.dart';
+import 'widgets/settings_group.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({
     required this.repository,
     required this.settings,
     required this.notifications,
+    required this.calendar,
     super.key,
   });
 
   final HolidayRepository repository;
   final AppSettings settings;
   final NotificationService notifications;
+  final CalendarService calendar;
 
   String _reminderSummary() {
-    final parts = <String>[];
+    final channels = <String>[
+      if (settings.channelCalendar) '日历',
+      if (settings.channelLocal) 'App通知',
+    ];
+    if (channels.isEmpty) return '未选择通知方式';
+    final parts = <String>[channels.join('+')];
     if (settings.briefingEnabled) {
       parts.add(
         '简报提前 ${settings.advanceDays} 天 '
@@ -39,7 +48,7 @@ class SettingsPage extends StatelessWidget {
         '调休 ${formatClock(settings.makeupTime, use24: settings.use24Hour)}',
       );
     }
-    return parts.isEmpty ? '全部提醒已关闭' : parts.join(' · ');
+    return parts.join(' · ');
   }
 
   String get _appearanceSummary {
@@ -86,6 +95,7 @@ class SettingsPage extends StatelessWidget {
                         page: NotificationSettingsPage(
                           settings: settings,
                           notifications: notifications,
+                          calendar: calendar,
                         ),
                       ),
                       _SettingsEntry(

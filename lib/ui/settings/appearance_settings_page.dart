@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../data/app_settings.dart';
 import '../../data/monet_colors.dart';
 import '../widgets/common.dart';
+import '../widgets/settings_group.dart';
 
 class AppearanceSettingsPage extends StatelessWidget {
   const AppearanceSettingsPage({required this.settings, super.key});
@@ -37,7 +38,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                   SettingsGroup(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
                             Text('一周的开始', style: theme.textTheme.titleMedium),

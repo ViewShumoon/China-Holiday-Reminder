@@ -71,4 +71,23 @@ void main() {
     final settings = await AppSettings.load();
     expect(settings.firstDayOfWeek, DateTime.monday);
   });
+
+  test('通知方式默认：日历渠道开、App 本地通知关', () async {
+    SharedPreferences.setMockInitialValues({});
+    final settings = await AppSettings.load();
+    expect(settings.channelCalendar, isTrue);
+    expect(settings.channelLocal, isFalse);
+    expect(settings.hasAnyChannel, isTrue);
+  });
+
+  test('通知方式两渠道独立持久化', () async {
+    SharedPreferences.setMockInitialValues({});
+    final first = await AppSettings.load();
+    await first.setChannelCalendar(false);
+    await first.setChannelLocal(true);
+
+    final restored = await AppSettings.load();
+    expect(restored.channelCalendar, isFalse);
+    expect(restored.channelLocal, isTrue);
+  });
 }

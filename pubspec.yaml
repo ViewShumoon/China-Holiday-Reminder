@@ -41,6 +41,7 @@ dependencies:
   intl: ^0.20.3
   url_launcher: ^6.3.2
   package_info_plus: ^10.2.1
+  m3e_segmented_list: ^0.0.3
 
 dev_dependencies:
   flutter_test:

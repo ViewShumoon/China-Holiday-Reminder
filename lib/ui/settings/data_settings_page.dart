@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/holiday_repository.dart';
 import '../widgets/common.dart';
+import '../widgets/settings_group.dart';
 
 class DataSettingsPage extends StatelessWidget {
   const DataSettingsPage({required this.repository, super.key});

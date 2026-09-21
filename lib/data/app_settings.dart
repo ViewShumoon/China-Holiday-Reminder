@@ -12,6 +12,8 @@ import 'monet_colors.dart';
 class AppSettings extends ChangeNotifier {
   AppSettings(this._prefs);
 
+  static const _channelCalendarKey = 'settings_channel_calendar';
+  static const _channelLocalKey = 'settings_channel_local';
   static const _briefingOnKey = 'settings_briefing_enabled';
   static const _advanceDaysKey = 'settings_advance_days';
   static const _briefingTimeKey = 'settings_briefing_time';
@@ -55,6 +57,10 @@ class AppSettings extends ChangeNotifier {
   int _firstDayOfWeek = DateTime.monday;
   bool _use24Hour = true;
 
+  /// 通知渠道（多选、互相独立）：系统日历（优先，默认开）与 App 本地通知（备选，默认关）。
+  bool _channelCalendar = true;
+  bool _channelLocal = false;
+
   /// null → 系统取色（Material You）；非 null → 色板种子色。
   Color? _seedColor;
 
@@ -68,6 +74,11 @@ class AppSettings extends ChangeNotifier {
   bool get useSystemColors => _seedColor == null;
   int get firstDayOfWeek => _firstDayOfWeek;
   bool get use24Hour => _use24Hour;
+  bool get channelCalendar => _channelCalendar;
+  bool get channelLocal => _channelLocal;
+
+  /// 是否任一通知渠道处于启用状态。
+  bool get hasAnyChannel => _channelCalendar || _channelLocal;
 
   /// 从 SharedPreferences 恢复设置。
   Future<void> restore() async {
@@ -92,6 +103,8 @@ class AppSettings extends ChangeNotifier {
       _firstDayOfWeek = DateTime.monday;
     }
     _use24Hour = _prefs.getBool(_use24HourKey) ?? true;
+    _channelCalendar = _prefs.getBool(_channelCalendarKey) ?? true;
+    _channelLocal = _prefs.getBool(_channelLocalKey) ?? false;
     notifyListeners();
   }
 
@@ -123,6 +136,18 @@ class AppSettings extends ChangeNotifier {
   Future<void> setMakeupTime(TimeOfDay value) async {
     _makeupTime = value;
     await _prefs.setString(_makeupTimeKey, _writeTime(value));
+    notifyListeners();
+  }
+
+  Future<void> setChannelCalendar(bool value) async {
+    _channelCalendar = value;
+    await _prefs.setBool(_channelCalendarKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setChannelLocal(bool value) async {
+    _channelLocal = value;
+    await _prefs.setBool(_channelLocalKey, value);
     notifyListeners();
   }
 

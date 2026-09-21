@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'app.dart';
 import 'data/app_settings.dart';
 import 'data/holiday_repository.dart';
+import 'notifications/calendar_service.dart';
 import 'notifications/notification_service.dart';
 
 Future<void> main() async {
@@ -21,6 +22,7 @@ Future<void> main() async {
       settings: settings,
       repository: repository,
       notifications: NotificationService(),
+      calendar: CalendarService(),
     ),
   );
 }

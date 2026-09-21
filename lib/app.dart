@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 
 import 'data/app_settings.dart';
 import 'data/holiday_repository.dart';
+import 'notifications/calendar_plan.dart';
+import 'notifications/calendar_service.dart';
 import 'notifications/notification_service.dart';
 import 'ui/home_page.dart';
 import 'ui/settings_page.dart';
@@ -16,12 +18,14 @@ class ChinaHolidayApp extends StatefulWidget {
     required this.settings,
     required this.repository,
     required this.notifications,
+    required this.calendar,
     super.key,
   });
 
   final AppSettings settings;
   final HolidayRepository repository;
   final NotificationService notifications;
+  final CalendarService calendar;
 
   @override
   State<ChinaHolidayApp> createState() => _ChinaHolidayAppState();
@@ -55,7 +59,10 @@ class _ChinaHolidayAppState extends State<ChinaHolidayApp>
 
   Future<void> _bootstrap() async {
     await widget.notifications.initialize();
-    await widget.notifications.requestPermission();
+    // 本地通知渠道关闭时不弹通知权限引导。
+    if (widget.settings.channelLocal) {
+      await widget.notifications.requestPermission();
+    }
     await widget.repository.refresh();
     if (!mounted) return;
     setState(() => _ready = true);
@@ -68,19 +75,34 @@ class _ChinaHolidayAppState extends State<ChinaHolidayApp>
     }
   }
 
-  /// 数据变更 / 设置变更 / 刷新完成 → cancelAll + 窗口内重新排期。
+  /// 数据变更 / 设置变更 / 刷新完成 → 按启用的渠道分别重排。
   void _reschedule() {
     if (!_ready || _rescheduling) return;
     _rescheduling = true;
     unawaited(
       Future(() async {
         try {
-          final events = buildSchedule(
-            timeline: widget.repository.timeline,
-            settings: widget.settings,
-            now: DateTime.now(),
-          );
-          await widget.notifications.reschedule(events);
+          final now = DateTime.now();
+          final timeline = widget.repository.timeline;
+          if (widget.settings.channelLocal) {
+            final events = buildSchedule(
+              timeline: timeline,
+              settings: widget.settings,
+              now: now,
+            );
+            await widget.notifications.reschedule(events);
+          } else {
+            await widget.notifications.cancelAll();
+          }
+
+          final plan = widget.settings.channelCalendar
+              ? buildCalendarPlan(
+                  timeline: timeline,
+                  settings: widget.settings,
+                  now: now,
+                )
+              : const <CalendarEventPlan>[];
+          await widget.calendar.sync(plan);
         } finally {
           _rescheduling = false;
         }
@@ -131,6 +153,7 @@ class _ChinaHolidayAppState extends State<ChinaHolidayApp>
                   repository: widget.repository,
                   settings: widget.settings,
                   notifications: widget.notifications,
+                  calendar: widget.calendar,
                 ),
               ],
             ),
