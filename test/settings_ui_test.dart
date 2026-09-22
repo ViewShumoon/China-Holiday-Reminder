@@ -26,8 +26,8 @@ void main() {
   testWidgets('设置主页：大标题 + 四个入口', (tester) async {
     await tester.pumpWidget(MaterialApp(home: await _page()));
     await tester.pump();
-    // 大标题折叠栏：展开/收起两份标题。
-    expect(find.text('设置'), findsNWidgets(2));
+    // 大标题折叠栏：单份标题随折叠连续缩放位移。
+    expect(find.text('设置'), findsOneWidget);
     for (final title in ['提醒与通知', '个性化', '数据', '关于']) {
       expect(find.text(title), findsOneWidget);
     }

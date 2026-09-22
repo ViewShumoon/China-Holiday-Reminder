@@ -15,6 +15,7 @@ import 'settings/data_settings_page.dart';
 import 'settings/notification_settings_page.dart';
 import 'widgets/common.dart';
 import 'widgets/settings_group.dart';
+import 'widgets/settings_scaffold.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({
@@ -73,55 +74,42 @@ class SettingsPage extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([repository, settings]),
       builder: (context, _) {
-        return Scaffold(
-          body: CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics()
-            ),
-            slivers: <Widget>[
-              SliverAppBar(
-                pinned: true,
-                expandedHeight: 160.0,
-                flexibleSpace: const FlexibleSpaceBar(title: Text('设置')),
-              ),
-              SliverList(
-                delegate: SliverChildListDelegate([
-                  SettingsGroup(
-                    children: [
-                      _SettingsEntry(
-                        icon: Icons.notifications_active_outlined,
-                        title: '提醒与通知',
-                        subtitle: _reminderSummary(),
-                        page: NotificationSettingsPage(
-                          settings: settings,
-                          notifications: notifications,
-                          calendar: calendar,
-                        ),
-                      ),
-                      _SettingsEntry(
-                        icon: Icons.palette_outlined,
-                        title: '个性化',
-                        subtitle: _appearanceSummary,
-                        page: AppearanceSettingsPage(settings: settings),
-                      ),
-                      _SettingsEntry(
-                        icon: Icons.storage_outlined,
-                        title: '数据',
-                        subtitle: _dataSummary,
-                        page: DataSettingsPage(repository: repository),
-                      ),
-                      _SettingsEntry(
-                        icon: Icons.info_outline,
-                        title: '关于',
-                        subtitle: '应用简介 · 数据来源 · 开源许可',
-                        page: const AboutSettingsPage(),
-                      ),
-                    ],
+        return SettingsPageScaffold(
+          title: '设置',
+          children: [
+            SettingsGroup(
+              children: [
+                _SettingsEntry(
+                  icon: Icons.notifications_active_outlined,
+                  title: '提醒与通知',
+                  subtitle: _reminderSummary(),
+                  page: NotificationSettingsPage(
+                    settings: settings,
+                    notifications: notifications,
+                    calendar: calendar,
                   ),
-                ]),
-              ),
-            ],
-          ),
+                ),
+                _SettingsEntry(
+                  icon: Icons.palette_outlined,
+                  title: '个性化',
+                  subtitle: _appearanceSummary,
+                  page: AppearanceSettingsPage(settings: settings),
+                ),
+                _SettingsEntry(
+                  icon: Icons.storage_outlined,
+                  title: '数据',
+                  subtitle: _dataSummary,
+                  page: DataSettingsPage(repository: repository),
+                ),
+                _SettingsEntry(
+                  icon: Icons.info_outline,
+                  title: '关于',
+                  subtitle: '应用简介 · 数据来源 · 开源许可',
+                  page: const AboutSettingsPage(),
+                ),
+              ],
+            ),
+          ],
         );
       },
     );

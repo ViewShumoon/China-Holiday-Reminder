@@ -8,6 +8,7 @@ import '../../notifications/calendar_service.dart';
 import '../../notifications/notification_service.dart';
 import '../widgets/common.dart';
 import '../widgets/settings_group.dart';
+import '../widgets/settings_scaffold.dart';
 
 class NotificationSettingsPage extends StatelessWidget {
   const NotificationSettingsPage({
@@ -86,153 +87,140 @@ class NotificationSettingsPage extends StatelessWidget {
           if (settings.channelLocal)
             _NotificationPermissionTile(notifications: notifications),
         ];
-        return Scaffold(
-          body: CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: <Widget>[
-              SliverAppBar(
-                pinned: true,
-                expandedHeight: 160.0,
-                flexibleSpace: const FlexibleSpaceBar(title: Text('提醒与通知')),
-              ),
-              SliverList(
-                delegate: SliverChildListDelegate([
-                  const SectionHeader('通知方式'),
-                  SettingsGroup(
-                    children: [
-                      CheckboxListTile(
-                        title: const Text('系统日历事件（优先）'),
-                        subtitle: const Text(
-                          '写入系统日历，由日历应用发送提醒，无需本应用后台运行',
-                        ),
-                        value: settings.channelCalendar,
-                        onChanged: (value) =>
-                            _toggleCalendarChannel(context, value ?? false),
-                      ),
-                      CheckboxListTile(
-                        title: const Text('App 本地通知（备选）'),
-                        subtitle: const Text(
-                          '由本应用排期通知，需要通知权限，默认关闭',
-                        ),
-                        value: settings.channelLocal,
-                        onChanged: (value) =>
-                            _toggleLocalChannel(context, value ?? false),
-                      ),
-                    ],
+        return SettingsPageScaffold(
+          title: '提醒与通知',
+          children: [
+            const SectionHeader('通知方式'),
+            SettingsGroup(
+              children: [
+                CheckboxListTile(
+                  title: const Text('系统日历事件（优先）'),
+                  subtitle: const Text(
+                    '写入系统日历，由日历应用发送提醒，无需本应用后台运行',
                   ),
-                  if (permissionRows.isNotEmpty) ...[
-                    const SectionHeader('权限与系统设置'),
-                    SettingsGroup(children: permissionRows),
-                  ],
-                  const SectionHeader('节前简报'),
-                  SettingsGroup(
+                  value: settings.channelCalendar,
+                  onChanged: (value) =>
+                      _toggleCalendarChannel(context, value ?? false),
+                ),
+                CheckboxListTile(
+                  title: const Text('App 本地通知（备选）'),
+                  subtitle: const Text(
+                    '由本应用排期通知，需要通知权限，默认关闭',
+                  ),
+                  value: settings.channelLocal,
+                  onChanged: (value) =>
+                      _toggleLocalChannel(context, value ?? false),
+                ),
+              ],
+            ),
+            if (permissionRows.isNotEmpty) ...[
+              const SectionHeader('权限与系统设置'),
+              SettingsGroup(children: permissionRows),
+            ],
+            const SectionHeader('节前简报'),
+            SettingsGroup(
+              children: [
+                SwitchListTile(
+                  title: const Text('节前简报'),
+                  subtitle: const Text('法定节假日开始前几天生成放假简报'),
+                  value: settings.briefingEnabled,
+                  onChanged: (value) async {
+                    await settings.setBriefingEnabled(value);
+                    if (context.mounted) _confirm(context);
+                  },
+                ),
+                AnimatedOpacity(
+                  opacity: settings.briefingEnabled ? 1 : 0.4,
+                  duration: const Duration(milliseconds: 150),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SwitchListTile(
-                        title: const Text('节前简报'),
-                        subtitle: const Text('法定节假日开始前几天生成放假简报'),
-                        value: settings.briefingEnabled,
-                        onChanged: (value) async {
-                          await settings.setBriefingEnabled(value);
-                          if (context.mounted) _confirm(context);
-                        },
-                      ),
-                      AnimatedOpacity(
-                        opacity: settings.briefingEnabled ? 1 : 0.4,
-                        duration: const Duration(milliseconds: 150),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                              child: SegmentedButton<int>(
-                                segments: const [
-                                  ButtonSegment(
-                                    value: 1,
-                                    label: Text('提前 1 天'),
-                                  ),
-                                  ButtonSegment(
-                                    value: 2,
-                                    label: Text('提前 2 天'),
-                                  ),
-                                  ButtonSegment(
-                                    value: 3,
-                                    label: Text('提前 3 天'),
-                                  ),
-                                ],
-                                selected: {settings.advanceDays},
-                                showSelectedIcon: false,
-                                onSelectionChanged: settings.briefingEnabled
-                                    ? (selection) async {
-                                        await settings.setAdvanceDays(
-                                          selection.first,
-                                        );
-                                        if (context.mounted) _confirm(context);
-                                      }
-                                    : null,
-                              ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                        child: SegmentedButton<int>(
+                          segments: const [
+                            ButtonSegment(
+                              value: 1,
+                              label: Text('提前 1 天'),
                             ),
-                            ListTile(
-                              title: const Text('发送时刻'),
-                              trailing: Text(
-                                formatClock(
-                                  settings.briefingTime,
-                                  use24: settings.use24Hour,
-                                ),
-                              ),
-                              enabled: settings.briefingEnabled,
-                              onTap: () => _pickTime(
-                                context,
-                                settings.briefingTime,
-                                (time) async {
-                                  await settings.setBriefingTime(time);
-                                  if (context.mounted) _confirm(context);
-                                },
-                              ),
+                            ButtonSegment(
+                              value: 2,
+                              label: Text('提前 2 天'),
+                            ),
+                            ButtonSegment(
+                              value: 3,
+                              label: Text('提前 3 天'),
                             ),
                           ],
+                          selected: {settings.advanceDays},
+                          showSelectedIcon: false,
+                          onSelectionChanged: settings.briefingEnabled
+                              ? (selection) async {
+                                  await settings.setAdvanceDays(
+                                    selection.first,
+                                  );
+                                  if (context.mounted) _confirm(context);
+                                }
+                              : null,
                         ),
                       ),
-                    ],
-                  ),
-                  const SectionHeader('调休提醒'),
-                  SettingsGroup(
-                    children: [
-                      SwitchListTile(
-                        title: const Text('调休提醒'),
-                        subtitle: const Text('调休上班日前一天生成上班提醒'),
-                        value: settings.makeupEnabled,
-                        onChanged: (value) async {
-                          await settings.setMakeupEnabled(value);
-                          if (context.mounted) _confirm(context);
-                        },
-                      ),
                       ListTile(
-                        title: const Text('提醒时刻'),
-                        subtitle: const Text('调休上班日的前一天'),
+                        title: const Text('发送时刻'),
                         trailing: Text(
                           formatClock(
-                            settings.makeupTime,
+                            settings.briefingTime,
                             use24: settings.use24Hour,
                           ),
                         ),
-                        enabled: settings.makeupEnabled,
+                        enabled: settings.briefingEnabled,
                         onTap: () => _pickTime(
                           context,
-                          settings.makeupTime,
+                          settings.briefingTime,
                           (time) async {
-                            await settings.setMakeupTime(time);
+                            await settings.setBriefingTime(time);
                             if (context.mounted) _confirm(context);
                           },
                         ),
                       ),
                     ],
                   ),
-                ]),
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+            const SectionHeader('调休提醒'),
+            SettingsGroup(
+              children: [
+                SwitchListTile(
+                  title: const Text('调休提醒'),
+                  subtitle: const Text('调休上班日前一天生成上班提醒'),
+                  value: settings.makeupEnabled,
+                  onChanged: (value) async {
+                    await settings.setMakeupEnabled(value);
+                    if (context.mounted) _confirm(context);
+                  },
+                ),
+                ListTile(
+                  title: const Text('提醒时刻'),
+                  subtitle: const Text('调休上班日的前一天'),
+                  trailing: Text(
+                    formatClock(
+                      settings.makeupTime,
+                      use24: settings.use24Hour,
+                    ),
+                  ),
+                  enabled: settings.makeupEnabled,
+                  onTap: () => _pickTime(
+                    context,
+                    settings.makeupTime,
+                    (time) async {
+                      await settings.setMakeupTime(time);
+                      if (context.mounted) _confirm(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
         );
       },
     );
